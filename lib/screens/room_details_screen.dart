@@ -4,6 +4,7 @@ import 'package:urban_nest/models/room.dart';
 import 'package:urban_nest/models/wishlist_payload.dart';
 import 'package:urban_nest/service/api_service.dart';
 import 'package:urban_nest/service/token_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RoomDetailsScreen extends StatefulWidget {
   final Room room;
@@ -162,6 +163,23 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     }
   }
 
+  Future<void> _openMap() async {
+    final query = Uri.encodeComponent(
+      "${widget.room.address}, ${widget.room.locality}, ${widget.room.city}",
+    );
+    final Uri url = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$query",
+    );
+
+    final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Could not open the map")));
+    }
+  }
+
   // Common section title builder to save code space
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -183,36 +201,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: Text(
-          room.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: Colors.teal.shade700,
-        iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: isWishlistLoading ? null : toggleWishlist,
-            icon: isWishlistLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Icon(
-                    Icons.favorite,
-                    color: isWishlisted ? Colors.grey : Colors.red,
-                  ),
-          ),
-        ],
-      ),
+
       body: Column(
         children: [
           Expanded(
@@ -220,19 +209,76 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: 40),
                   // Image Gallery with a modern rounded bottom look
                   Stack(
                     children: [
-                      SizedBox(
-                        height: 260,
-                        child: PageView.builder(
-                          itemCount: room.images.length,
-                          itemBuilder: (context, index) {
-                            return Image.network(
-                              room.images[index].imageUrl,
-                              fit: BoxFit.cover,
-                            );
-                          },
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: SizedBox(
+                          height: 280, // adjust to taste
+                          child: PageView.builder(
+                            itemCount: room.images.length,
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: Image.network(
+                                  room.images[index].imageUrl,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey.shade300,
+                                      alignment: Alignment.center,
+                                      child: const Icon(
+                                        Icons.broken_image_outlined,
+                                        size: 48,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black38,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: IconButton(
+                            onPressed: isWishlistLoading
+                                ? null
+                                : toggleWishlist,
+                            icon: isWishlistLoading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.favorite,
+                                    color: isWishlisted
+                                        ? Colors.grey
+                                        : Colors.red,
+                                    size: 28,
+                                  ),
+                          ),
                         ),
                       ),
                       Positioned(
@@ -253,6 +299,25 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                               color: Colors.white,
                               fontSize: 12,
                             ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 16,
+                        left: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black38,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(Icons.arrow_back_ios),
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -358,6 +423,46 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: _openMap,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.teal.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.teal.shade100),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.map_outlined,
+                                  color: Colors.teal.shade700,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "View on Google Maps",
+                                  style: TextStyle(
+                                    color: Colors.teal.shade800,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.open_in_new,
+                                  color: Colors.teal.shade700,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
 
                         _buildSectionTitle("Description"),

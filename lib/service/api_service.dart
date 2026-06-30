@@ -151,7 +151,7 @@ class ApiService {
 
     final response = await _dio.get(
       "/api/rooms/$roomId",
-      queryParameters: {if (tenantId != null) "tenantId": tenantId},
+      queryParameters: {"tenantId": ?tenantId},
     );
 
     return Room.fromJson(response.data);

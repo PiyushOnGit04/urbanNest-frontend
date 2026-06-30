@@ -396,7 +396,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
                                           ),
                                           Switch(
                                             value: room.available,
-                                            activeColor: accentColor,
+                                            activeThumbColor: accentColor,
                                             onChanged: (value) async {
                                               try {
                                                 await _apiService
