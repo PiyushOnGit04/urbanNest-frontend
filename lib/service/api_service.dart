@@ -7,6 +7,7 @@ import 'package:urban_nest/models/login_request.dart';
 import 'package:urban_nest/models/register_request.dart';
 import 'package:urban_nest/models/room.dart';
 import 'package:urban_nest/models/room_request.dart';
+import 'package:urban_nest/models/update_profile_request.dart';
 import 'package:urban_nest/models/user.dart';
 import 'package:urban_nest/models/wishlist_payload.dart';
 
@@ -25,6 +26,20 @@ class ApiService {
   );
 
   final TokenService _tokenService = TokenService();
+
+  ApiService() {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _tokenService.getToken();
+          if (token != null) {
+            options.headers["Authorization"] = "Bearer $token";
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+  }
 
   Future<void> register(RegisterRequest request) async {
     await _dio.post(Constants.register, data: request.toJson());
@@ -136,6 +151,15 @@ class ApiService {
 
   Future<User> getUserById(int id) async {
     final response = await _dio.get("/api/users/$id");
+
+    return User.fromJson(response.data);
+  }
+
+  Future<User> updateProfile(String? name, String? phoneNumber) async {
+    final response = await _dio.put(
+      "/api/users/me",
+      data: UpdateProfileRequest(name: name, phoneNumber: phoneNumber).toJson(),
+    );
 
     return User.fromJson(response.data);
   }

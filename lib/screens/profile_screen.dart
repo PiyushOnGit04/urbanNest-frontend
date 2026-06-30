@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:urban_nest/models/user.dart';
+import 'package:urban_nest/screens/help_and_support.dart';
+import 'package:urban_nest/screens/login_screen.dart';
 import 'package:urban_nest/service/api_service.dart';
 import 'package:urban_nest/service/token_service.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -17,19 +19,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   User? user;
   bool isLoading = true;
+  bool isEditing = false;
+  bool isSaving = false;
+
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
 
   // Theme Palette matching Home & Details
-  final Color primaryColor = const Color(0xFF1A5F7A); // Deep Slate Blue
-  final Color accentColor = const Color(0xFF57C5B6); // Clean Mint Green
-  final Color backgroundColor = const Color(
-    0xFFF5F9FA,
-  ); // Ultra-light cool background
+  final Color primaryColor = const Color(0xFF1A5F7A);
+  final Color accentColor = const Color(0xFF57C5B6);
+  final Color backgroundColor = const Color(0xFFF5F9FA);
   final Color cardColor = Colors.white;
 
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController();
+    _phoneController = TextEditingController();
     loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
   Future<void> loadProfile() async {
@@ -41,6 +55,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() {
         user = profile;
+        _nameController.text = profile.name;
+        _phoneController.text = profile.phoneNumber;
       });
     } catch (e) {
       debugPrint("Error loading profile: $e");
@@ -49,6 +65,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  Future<void> logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Log Out",
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          "Are you sure you want to log out?",
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              "Cancel",
+              style: GoogleFonts.poppins(color: Colors.grey.shade600),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              "Log Out",
+              style: GoogleFonts.poppins(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await _tokenService.clearToken();
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  void openHelpSupport() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+    );
+  }
+
+  void startEditing() {
+    setState(() {
+      isEditing = true;
+    });
+  }
+
+  void cancelEditing() {
+    setState(() {
+      // Reset fields back to current user data, discarding unsaved edits
+      _nameController.text = user?.name ?? "";
+      _phoneController.text = user?.phoneNumber ?? "";
+      isEditing = false;
+    });
+  }
+
+  Future<void> saveProfile() async {
+    final newName = _nameController.text.trim();
+    final newPhone = _phoneController.text.trim();
+
+    if (newName.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Name cannot be empty")));
+      return;
+    }
+
+    if (newPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Phone number cannot be empty")),
+      );
+      return;
+    }
+
+    setState(() => isSaving = true);
+
+    try {
+      final updated = await _apiService.updateProfile(newName, newPhone);
+
+      setState(() {
+        user = updated;
+        isEditing = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Profile updated successfully"),
+            backgroundColor: Colors.teal.shade800,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to update profile: ${e.toString()}"),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => isSaving = false);
+    }
   }
 
   @override
@@ -113,7 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
 
-              // User Name
+              // User Name (read-only display, edited via fields below)
               Text(
                 user?.name ?? "User Name",
                 style: GoogleFonts.poppins(
@@ -140,17 +275,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Column(
                   children: [
+                    isEditing
+                        ? _buildEditableTile(
+                            Icons.badge_outlined,
+                            "Full Name",
+                            _nameController,
+                          )
+                        : _buildProfileTile(
+                            Icons.badge_outlined,
+                            "Full Name",
+                            user?.name ?? "Not Available",
+                          ),
+                    _buildDivider(),
                     _buildProfileTile(
                       Icons.email_outlined,
                       "Email Address",
                       user?.email ?? "Not Available",
                     ),
                     _buildDivider(),
-                    _buildProfileTile(
-                      Icons.phone_android_outlined,
-                      "Phone Number",
-                      user?.phoneNumber ?? "Not Available",
-                    ),
+                    isEditing
+                        ? _buildEditableTile(
+                            Icons.phone_android_outlined,
+                            "Phone Number",
+                            _phoneController,
+                            keyboardType: TextInputType.phone,
+                          )
+                        : _buildProfileTile(
+                            Icons.phone_android_outlined,
+                            "Phone Number",
+                            user?.phoneNumber ?? "Not Available",
+                          ),
                     _buildDivider(),
                     _buildProfileTile(
                       Icons.badge_outlined,
@@ -162,27 +316,139 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Edit Profile Action Button
+              // Edit Profile / Save & Cancel Action Buttons
+              if (!isEditing)
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: startEditing,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      "Edit Profile",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: OutlinedButton(
+                          onPressed: isSaving ? null : cancelEditing,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: primaryColor,
+                            side: BorderSide(color: primaryColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: isSaving ? null : saveProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: isSaving
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  ),
+                                )
+                              : Text(
+                                  "Save Changes",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 32),
+
+              // Help & Support
               SizedBox(
                 width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Logic remains pristine
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
+                height: 54,
+                child: OutlinedButton.icon(
+                  onPressed: openHelpSupport,
+                  icon: Icon(Icons.help_outline_rounded, color: primaryColor),
+                  label: Text(
+                    "Help & Support",
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: primaryColor,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey.shade300),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: Text(
-                    "Edit Profile",
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Logout
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: OutlinedButton.icon(
+                  onPressed: logout,
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.redAccent,
+                  ),
+                  label: Text(
+                    "Log Out",
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.redAccent.withOpacity(0.4)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
@@ -194,7 +460,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Profile data block builder method
+  // Read-only profile data block
   Widget _buildProfileTile(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -228,6 +494,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontSize: 14,
                     color: primaryColor,
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Editable version of a profile tile, used while isEditing is true
+  Widget _buildEditableTile(
+    IconData icon,
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: accentColor, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey.shade400,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                TextField(
+                  controller: controller,
+                  keyboardType: keyboardType,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    border: InputBorder.none,
                   ),
                 ),
               ],
