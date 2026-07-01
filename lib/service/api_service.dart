@@ -45,6 +45,17 @@ class ApiService {
     await _dio.post(Constants.register, data: request.toJson());
   }
 
+  // Uses the shared _dio instance so the Authorization interceptor above
+  // attaches the JWT automatically — fixes uploads failing after
+  // SecurityConfig started requiring authentication on this endpoint.
+  Future<void> uploadRoomImages(int roomId, List<String> filePaths) async {
+    final formData = FormData();
+    for (final path in filePaths) {
+      formData.files.add(MapEntry("files", await MultipartFile.fromFile(path)));
+    }
+    await _dio.post("/api/rooms/$roomId/images", data: formData);
+  }
+
   Future<AuthResponse> login(LoginRequest request) async {
     try {
       print("BASE URL = ${Constants.baseUrl}");

@@ -138,13 +138,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 initialValue:
                     selectedRole, // Fixed: replaced initialValue with value
                 decoration: _buildInputDecoration(
-                  label: "I am a...",
+                  label: "I want to ....",
                   icon: Icons.assignment_ind_outlined,
                 ),
                 dropdownColor: Colors.white,
                 items: const [
-                  DropdownMenuItem(value: "ROLE_TENANT", child: Text("Tenant")),
-                  DropdownMenuItem(value: "ROLE_OWNER", child: Text("Owner")),
+                  DropdownMenuItem(
+                    value: "ROLE_TENANT",
+                    child: Text("Search Room"),
+                  ),
+                  DropdownMenuItem(
+                    value: "ROLE_OWNER",
+                    child: Text("List room / pg / hostel, etc"),
+                  ),
                 ],
                 onChanged: (value) {
                   setState(() {

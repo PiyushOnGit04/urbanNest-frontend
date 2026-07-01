@@ -39,8 +39,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   double? minRent;
   double? maxRent;
   String? roomType;
-  String? sortBy;
-  String? order;
+  String? sortBy = "createdAt";
+  String? order = "desc";
+
   Future<void> loadRooms() async {
     try {
       final fetchedRooms = await _apiService.getRooms(

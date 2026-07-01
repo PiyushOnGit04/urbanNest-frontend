@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../service/api_service.dart';
 
 class UploadImagesScreen extends StatefulWidget {
   final int roomId;
@@ -42,16 +42,10 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> {
         isUploading = true;
       });
 
-      FormData formData = FormData();
-      for (var image in selectedImages) {
-        formData.files.add(
-          MapEntry("files", await MultipartFile.fromFile(image.path)),
-        );
-      }
-
-      await Dio().post(
-        "https://urban-nest-backend-production.up.railway.app/api/rooms/${widget.roomId}/images",
-        data: formData,
+      final apiService = ApiService();
+      await apiService.uploadRoomImages(
+        widget.roomId,
+        selectedImages.map((img) => img.path).toList(),
       );
 
       if (mounted) {
