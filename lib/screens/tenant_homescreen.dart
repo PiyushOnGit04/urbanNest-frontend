@@ -9,6 +9,8 @@ import 'package:urban_nest/service/api_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:urban_nest/service/token_service.dart';
 
+// ─── Root shell with bottom nav ───────────────────────────────────────────────
+
 class TenantHomeScreen extends StatefulWidget {
   const TenantHomeScreen({super.key});
 
@@ -17,23 +19,120 @@ class TenantHomeScreen extends StatefulWidget {
 }
 
 class _TenantHomeScreenState extends State<TenantHomeScreen> {
+  int _currentIndex = 0;
+
+  // Keep pages alive when switching tabs
+  final List<Widget> _pages = const [
+    _HomeTab(),
+    WishlistScreen(),
+    ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // Each tab manages its own Scaffold/AppBar
+      body: IndexedStack(index: _currentIndex, children: _pages),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1A5F7A).withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top:
+              false, // Ensures padding only on the bottom for notch/home indicator
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ),
+            child: NavigationBar(
+              elevation: 0,
+              height: 65,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (i) => setState(() => _currentIndex = i),
+              backgroundColor: Colors.transparent,
+              indicatorColor: const Color(0xFF1A5F7A).withOpacity(0.08),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: [
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.home_outlined,
+                    color: Colors.grey.shade500,
+                    size: 24,
+                  ),
+                  selectedIcon: const Icon(
+                    Icons.home_rounded,
+                    color: Color(0xFF1A5F7A),
+                    size: 26,
+                  ),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.favorite_border_rounded,
+                    color: Colors.grey.shade500,
+                    size: 24,
+                  ),
+                  selectedIcon: const Icon(
+                    Icons.favorite_rounded,
+                    color: Color(0xFF1A5F7A),
+                    size: 26,
+                  ),
+                  label: 'Wishlist',
+                ),
+                NavigationDestination(
+                  icon: Icon(
+                    Icons.person_outline_rounded,
+                    color: Colors.grey.shade500,
+                    size: 24,
+                  ),
+                  selectedIcon: const Icon(
+                    Icons.person_rounded,
+                    color: Color(0xFF1A5F7A),
+                    size: 26,
+                  ),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Home tab (your original screen, now without the drawer/profile icon) ────
+
+class _HomeTab extends StatefulWidget {
+  const _HomeTab();
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
   final TextEditingController searchController = TextEditingController();
   final ApiService _apiService = ApiService();
   final TokenService _tokenService = TokenService();
   List<Room> rooms = [];
   bool isLoading = true;
 
-  // Cohesive brand palette
   final Color primaryColor = const Color(0xFF1A5F7A);
   final Color accentColor = const Color(0xFF57C5B6);
   final Color backgroundColor = const Color(0xFFF4F7F8);
   final Color cardColor = Colors.white;
-
-  @override
-  void initState() {
-    super.initState();
-    loadRooms();
-  }
 
   String? search;
   double? minRent;
@@ -41,6 +140,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   String? roomType;
   String? sortBy = "createdAt";
   String? order = "desc";
+
+  @override
+  void initState() {
+    super.initState();
+    loadRooms();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> loadRooms() async {
     try {
@@ -52,21 +163,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         sortBy: sortBy,
         order: order,
       );
-
       if (!mounted) return;
-
       setState(() {
         rooms = fetchedRooms;
         isLoading = false;
       });
     } catch (e) {
       debugPrint("Error loading rooms: $e");
-
       if (!mounted) return;
-
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -88,7 +193,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-
                 ListTile(
                   leading: const Icon(Icons.currency_rupee),
                   title: const Text("Price: Low to High"),
@@ -99,7 +203,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     await loadRooms();
                   },
                 ),
-
                 ListTile(
                   leading: const Icon(Icons.currency_rupee),
                   title: const Text("Price: High to Low"),
@@ -110,7 +213,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     await loadRooms();
                   },
                 ),
-
                 ListTile(
                   leading: const Icon(Icons.new_releases),
                   title: const Text("Newest"),
@@ -121,7 +223,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     await loadRooms();
                   },
                 ),
-
                 ListTile(
                   leading: const Icon(Icons.history),
                   title: const Text("Oldest"),
@@ -144,11 +245,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final minController = TextEditingController(
       text: minRent?.toString() ?? "",
     );
-
     final maxController = TextEditingController(
       text: maxRent?.toString() ?? "",
     );
-
     String? selectedRoomType = roomType;
 
     showModalBottomSheet(
@@ -181,18 +280,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     const Text(
                       "Room Type",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-
                     const SizedBox(height: 10),
-
                     DropdownButtonFormField<String>(
-                      initialValue: selectedRoomType,
+                      value: selectedRoomType,
                       items: ["PG", "HOSTEL", "ROOM", "FLAT"]
                           .map(
                             (e) => DropdownMenuItem(value: e, child: Text(e)),
@@ -201,15 +296,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                       ),
-                      onChanged: (value) {
-                        setModalState(() {
-                          selectedRoomType = value;
-                        });
-                      },
+                      onChanged: (value) =>
+                          setModalState(() => selectedRoomType = value),
                     ),
-
                     const SizedBox(height: 20),
-
                     TextField(
                       controller: minController,
                       keyboardType: TextInputType.number,
@@ -218,9 +308,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
                     TextField(
                       controller: maxController,
                       keyboardType: TextInputType.number,
@@ -229,42 +317,55 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade100,
+                        ),
                         onPressed: () async {
                           roomType = selectedRoomType;
-
                           minRent = minController.text.isEmpty
                               ? null
                               : double.tryParse(minController.text);
-
                           maxRent = maxController.text.isEmpty
                               ? null
                               : double.tryParse(maxController.text);
-
                           Navigator.pop(context);
-
                           await loadRooms();
                         },
-                        child: const Text("Apply Filters"),
+                        child: const Text(
+                          "Apply Filters",
+                          style: TextStyle(color: Colors.black),
+                        ),
                       ),
                     ),
-
                     TextButton(
                       onPressed: () async {
                         roomType = null;
                         minRent = null;
                         maxRent = null;
-
                         Navigator.pop(context);
-
                         await loadRooms();
                       },
-                      child: const Center(child: Text("Clear Filters")),
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStatePropertyAll<Color>(
+                          Colors.blue.shade100,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.close, color: Colors.black),
+                            Text(
+                              "Clear Filters",
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -276,12 +377,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
-  }
-
   void _navigateToDetails(Room room) {
     Navigator.push(
       context,
@@ -289,49 +384,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
+  void _logout() async {
+    await _tokenService.clearToken();
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      drawer: Drawer(
-        backgroundColor: backgroundColor,
-        child: Column(
-          children: [
-            const Spacer(),
-            const Divider(indent: 16, endIndent: 16),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: ListTile(
-                leading: const Icon(
-                  Icons.logout_rounded,
-                  color: Colors.redAccent,
-                ),
-                title: Text(
-                  "Logout",
-                  style: GoogleFonts.poppins(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                onTap: () async {
-                  await _tokenService.clearToken();
-                  if (!context.mounted) return;
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Colors.white),
+        automaticallyImplyLeading: false, // no drawer burger
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -349,24 +420,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             color: Colors.white,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                );
-              },
-              icon: const Icon(Icons.account_circle_outlined, size: 26),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // Integrated Control Header
+          // Search + Sort/Filter controls
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -385,7 +442,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             ),
             child: Column(
               children: [
-                // Modernized Search
                 Container(
                   decoration: BoxDecoration(
                     color: backgroundColor,
@@ -415,52 +471,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Action Buttons Row
                 Row(
                   children: [
                     _buildActionButton(
                       icon: Icons.sort_rounded,
                       label: "Sort",
-                      onTap: () {
-                        _showSortSheet();
-                      },
+                      onTap: _showSortSheet,
                     ),
                     const SizedBox(width: 8),
                     _buildActionButton(
                       icon: Icons.tune_rounded,
                       label: "Filter",
-                      onTap: () {
-                        _showFilterSheet();
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.favorite_rounded, size: 18),
-                        label: const Text("Wishlist"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: accentColor.withOpacity(0.15),
-                          foregroundColor: primaryColor,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const WishlistScreen(),
-                            ),
-                          );
-                        },
-                      ),
+                      onTap: _showFilterSheet,
                     ),
                   ],
                 ),
@@ -468,7 +490,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             ),
           ),
 
-          // Main Content Section
+          // Room list
           Expanded(
             child: isLoading
                 ? Center(
@@ -489,10 +511,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 : ListView.builder(
                     itemCount: rooms.length,
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                    itemBuilder: (context, index) {
-                      final room = rooms[index];
-                      return _buildRoomCard(room);
-                    },
+                    itemBuilder: (context, index) =>
+                        _buildRoomCard(rooms[index]),
                   ),
           ),
         ],
@@ -506,7 +526,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     required VoidCallback onTap,
   }) {
     return Expanded(
-      flex: 1,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
@@ -557,7 +576,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image Stack with Visual Badge
               if (room.coverImage != null)
                 Stack(
                   children: [
@@ -635,7 +653,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                   ],
                 ),
-              // Room Details Text Content Block
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
