@@ -33,81 +33,38 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     return Scaffold(
       // Each tab manages its own Scaffold/AppBar
       body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (i) => setState(() => _currentIndex = i),
+        backgroundColor: Colors.white,
+        indicatorColor: const Color(0xFF1A5F7A).withOpacity(0.12),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(
+              Icons.home_rounded,
+              color: Color(0xFF1A5F7A),
+            ),
+            label: 'Home',
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1A5F7A).withOpacity(0.06),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+          NavigationDestination(
+            icon: const Icon(Icons.favorite_border_rounded),
+            selectedIcon: const Icon(
+              Icons.favorite_rounded,
+              color: Color(0xFF1A5F7A),
             ),
-          ],
-        ),
-        child: SafeArea(
-          top:
-              false, // Ensures padding only on the bottom for notch/home indicator
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12.0,
-              vertical: 8.0,
-            ),
-            child: NavigationBar(
-              elevation: 0,
-              height: 65,
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (i) => setState(() => _currentIndex = i),
-              backgroundColor: Colors.transparent,
-              indicatorColor: const Color(0xFF1A5F7A).withOpacity(0.08),
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              destinations: [
-                NavigationDestination(
-                  icon: Icon(
-                    Icons.home_outlined,
-                    color: Colors.grey.shade500,
-                    size: 24,
-                  ),
-                  selectedIcon: const Icon(
-                    Icons.home_rounded,
-                    color: Color(0xFF1A5F7A),
-                    size: 26,
-                  ),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(
-                    Icons.favorite_border_rounded,
-                    color: Colors.grey.shade500,
-                    size: 24,
-                  ),
-                  selectedIcon: const Icon(
-                    Icons.favorite_rounded,
-                    color: Color(0xFF1A5F7A),
-                    size: 26,
-                  ),
-                  label: 'Wishlist',
-                ),
-                NavigationDestination(
-                  icon: Icon(
-                    Icons.person_outline_rounded,
-                    color: Colors.grey.shade500,
-                    size: 24,
-                  ),
-                  selectedIcon: const Icon(
-                    Icons.person_rounded,
-                    color: Color(0xFF1A5F7A),
-                    size: 26,
-                  ),
-                  label: 'Profile',
-                ),
-              ],
-            ),
+            label: 'Wishlist',
           ),
-        ),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline_rounded),
+            selectedIcon: const Icon(
+              Icons.person_rounded,
+              color: Color(0xFF1A5F7A),
+            ),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -307,76 +264,188 @@ class _HomeTabState extends State<_HomeTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      elevation: 5,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                left: 20,
+                right: 20,
+                top: 12,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
-                      child: Text(
-                        "Filters",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                    // Top Drag Handle Indicator
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Room Type",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      value: selectedRoomType,
-                      items: ["PG", "HOSTEL", "ROOM", "FLAT"]
-                          .map(
-                            (e) => DropdownMenuItem(value: e, child: Text(e)),
-                          )
-                          .toList(),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) =>
-                          setModalState(() => selectedRoomType = value),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: minController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: "Minimum Rent",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: maxController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: "Maximum Rent",
-                        border: OutlineInputBorder(),
+                    Center(
+                      child: Text(
+                        "Filter Properties",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: primaryColor,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
+
+                    // Section: Room Type
+                    Text(
+                      "Room / Property Type",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Clean ChoiceChip selection grid replacing the legacy dropdown
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: ["PG", "HOSTEL", "ROOM", "FLAT"].map((type) {
+                        final isSelected = selectedRoomType == type;
+                        return ChoiceChip(
+                          label: Text(type),
+                          selected: isSelected,
+                          labelStyle: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.grey.shade700,
+                          ),
+                          selectedColor: primaryColor,
+                          backgroundColor: backgroundColor,
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          showCheckmark: false,
+                          onSelected: (bool selected) {
+                            setModalState(() {
+                              selectedRoomType = selected ? type : null;
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Section: Price Range
+                    Text(
+                      "Budget Range (Monthly)",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: minController,
+                            keyboardType: TextInputType.number,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: InputDecoration(
+                              labelText: "Min Rent",
+                              labelStyle: GoogleFonts.poppins(
+                                color: Colors.grey.shade500,
+                                fontSize: 13,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.currency_rupee_rounded,
+                                size: 16,
+                                color: primaryColor,
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: accentColor,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: maxController,
+                            keyboardType: TextInputType.number,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                            decoration: InputDecoration(
+                              labelText: "Max Rent",
+                              labelStyle: GoogleFonts.poppins(
+                                color: Colors.grey.shade500,
+                                fontSize: 13,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.currency_rupee_rounded,
+                                size: 16,
+                                color: primaryColor,
+                              ),
+                              filled: true,
+                              fillColor: backgroundColor,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: accentColor,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Primary Action Button
                     SizedBox(
                       width: double.infinity,
+                      height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal.shade100,
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
                         ),
                         onPressed: () async {
                           roomType = selectedRoomType;
@@ -389,33 +458,51 @@ class _HomeTabState extends State<_HomeTab> {
                           Navigator.pop(context);
                           await loadRooms();
                         },
-                        child: const Text(
+                        child: Text(
                           "Apply Filters",
-                          style: TextStyle(color: Colors.black),
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () async {
-                        roomType = null;
-                        minRent = null;
-                        maxRent = null;
-                        Navigator.pop(context);
-                        await loadRooms();
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStatePropertyAll<Color>(
-                          Colors.blue.shade100,
+                    const SizedBox(height: 8),
+
+                    // Secondary Action Button (Reset)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: const Center(
+                        onPressed: () async {
+                          roomType = null;
+                          minRent = null;
+                          maxRent = null;
+                          Navigator.pop(context);
+                          await loadRooms();
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.close, color: Colors.black),
+                            Icon(
+                              Icons.refresh_rounded,
+                              color: Colors.grey.shade600,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
                             Text(
-                              "Clear Filters",
-                              style: TextStyle(color: Colors.black),
+                              "Reset All Filters",
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
                             ),
                           ],
                         ),
@@ -474,6 +561,13 @@ class _HomeTabState extends State<_HomeTab> {
             color: Colors.white,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout_rounded, color: Colors.white),
+            tooltip: "Logout",
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -552,21 +646,35 @@ class _HomeTabState extends State<_HomeTab> {
                       valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                     ),
                   )
-                : rooms.isEmpty
-                ? Center(
-                    child: Text(
-                      "No rooms available right now",
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: rooms.length,
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                    itemBuilder: (context, index) =>
-                        _buildRoomCard(rooms[index]),
+                : RefreshIndicator(
+                    color: primaryColor,
+                    onRefresh: loadRooms,
+                    child: rooms.isEmpty
+                        ? ListView(
+                            // ListView (not Center) so the pull-to-refresh drag
+                            // gesture has something to scroll against when empty
+                            children: [
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.5,
+                                child: Center(
+                                  child: Text(
+                                    "No rooms available right now",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            itemCount: rooms.length,
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                            itemBuilder: (context, index) =>
+                                _buildRoomCard(rooms[index]),
+                          ),
                   ),
           ),
         ],

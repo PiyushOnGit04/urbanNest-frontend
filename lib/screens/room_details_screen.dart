@@ -524,7 +524,39 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                                     color: Colors.teal.shade700,
                                   ),
                                 ),
-                                title: Text(room.owner?.phoneNumber ?? "N/A"),
+                                title: Text(
+                                  room.owner?.phoneNumber ?? "N/A",
+                                  style: TextStyle(
+                                    color: Colors.teal.shade700,
+                                    decoration: TextDecoration.underline,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                trailing: Icon(
+                                  Icons.call_outlined,
+                                  color: Colors.teal.shade600,
+                                  size: 20,
+                                ),
+                                onTap: room.owner?.phoneNumber != null
+                                    ? () async {
+                                        final uri = Uri(
+                                          scheme: 'tel',
+                                          path: room.owner!.phoneNumber,
+                                        );
+                                        final launched = await launchUrl(uri);
+                                        if (!launched && context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                "Could not open the phone app",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : null,
                               ),
                             ],
                           ),
