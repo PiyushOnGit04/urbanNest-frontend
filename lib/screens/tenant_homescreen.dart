@@ -178,60 +178,114 @@ class _HomeTabState extends State<_HomeTab> {
   void _showSortSheet() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
+      elevation: 4,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        // Helper to check if a specific sort option is currently active
+        bool isSelected(String field, String ord) =>
+            sortBy == field && order == ord;
+
+        Widget buildSortOption({
+          required IconData icon,
+          required String title,
+          required String field,
+          required String ord,
+        }) {
+          final active = isSelected(field, ord);
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: active
+                  ? primaryColor.withOpacity(0.05)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ListTile(
+              dense: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              leading: Icon(
+                icon,
+                color: active ? primaryColor : Colors.grey.shade600,
+                size: 20,
+              ),
+              title: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                  color: active ? primaryColor : Colors.black87,
+                ),
+              ),
+              trailing: active
+                  ? Icon(
+                      Icons.check_circle_rounded,
+                      color: primaryColor,
+                      size: 20,
+                    )
+                  : null,
+              onTap: () async {
+                sortBy = field;
+                order = ord;
+                Navigator.pop(context);
+                await loadRooms();
+              },
+            ),
+          );
+        }
+
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  "Sort By",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                // Elegant Top Grabber / Drag Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                ListTile(
-                  leading: const Icon(Icons.currency_rupee),
-                  title: const Text("Price: Low to High"),
-                  onTap: () async {
-                    sortBy = "rent";
-                    order = "asc";
-                    Navigator.pop(context);
-                    await loadRooms();
-                  },
+                Text(
+                  "Sort By",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.currency_rupee),
-                  title: const Text("Price: High to Low"),
-                  onTap: () async {
-                    sortBy = "rent";
-                    order = "desc";
-                    Navigator.pop(context);
-                    await loadRooms();
-                  },
+                const SizedBox(height: 16),
+                buildSortOption(
+                  icon: Icons.arrow_downward_rounded,
+                  title: "Price: Low to High",
+                  field: "rent",
+                  ord: "asc",
                 ),
-                ListTile(
-                  leading: const Icon(Icons.new_releases),
-                  title: const Text("Newest"),
-                  onTap: () async {
-                    sortBy = "createdAt";
-                    order = "desc";
-                    Navigator.pop(context);
-                    await loadRooms();
-                  },
+                buildSortOption(
+                  icon: Icons.arrow_upward_rounded,
+                  title: "Price: High to Low",
+                  field: "rent",
+                  ord: "desc",
                 ),
-                ListTile(
-                  leading: const Icon(Icons.history),
-                  title: const Text("Oldest"),
-                  onTap: () async {
-                    sortBy = "createdAt";
-                    order = "asc";
-                    Navigator.pop(context);
-                    await loadRooms();
-                  },
+                buildSortOption(
+                  icon: Icons.new_releases_outlined,
+                  title: "Newest Arrivals",
+                  field: "createdAt",
+                  ord: "desc",
+                ),
+                buildSortOption(
+                  icon: Icons.history_toggle_off_rounded,
+                  title: "Oldest Listings",
+                  field: "createdAt",
+                  ord: "asc",
                 ),
               ],
             ),
