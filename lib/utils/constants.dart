@@ -8,4 +8,6 @@ class Constants {
   static const String register = "/api/auth/register";
 
   static const String rooms = "/api/rooms";
+
+  static const String users = "/api/users";
 }

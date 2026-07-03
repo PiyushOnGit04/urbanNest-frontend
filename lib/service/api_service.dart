@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:urban_nest/models/DeleteAccountRequest.dart';
 import 'package:urban_nest/models/amenity.dart';
 import 'package:urban_nest/models/auth_response.dart';
 import 'package:urban_nest/models/inquiry.dart';
@@ -164,6 +165,10 @@ class ApiService {
     final response = await _dio.get("/api/users/$id");
 
     return User.fromJson(response.data);
+  }
+
+  Future<void> deleteAccount(DeleteAccountRequest request) async {
+    await _dio.delete("${Constants.users}/me", data: request.toJson());
   }
 
   Future<User> updateProfile(String? name, String? phoneNumber) async {
