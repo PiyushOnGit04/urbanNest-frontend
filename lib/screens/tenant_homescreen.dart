@@ -561,13 +561,6 @@ class _HomeTabState extends State<_HomeTab> {
             color: Colors.white,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout_rounded, color: Colors.white),
-            tooltip: "Logout",
-          ),
-        ],
       ),
       body: Column(
         children: [

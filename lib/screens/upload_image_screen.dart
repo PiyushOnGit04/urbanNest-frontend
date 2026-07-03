@@ -52,9 +52,11 @@ class _UploadImagesScreenState extends State<UploadImagesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Images Uploaded Successfully!",
+              "Room Listed Successfully!",
               style: GoogleFonts.poppins(),
             ),
+            closeIconColor: Colors.black,
+            elevation: 10,
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
