@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:urban_nest/models/room.dart';
 import 'package:urban_nest/screens/room_details_screen.dart';
@@ -50,13 +51,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
     try {
       await _apiService.removeFromWishlist(tenantId, room.id);
+    } on DioException catch (e) {
+      print("Status Code: ${e.response?.statusCode}");
+      print("Response: ${e.response?.data}");
+      print("Message: ${e.message}");
     } catch (e) {
-      loadWishlist();
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
+      print(e);
     }
   }
 
