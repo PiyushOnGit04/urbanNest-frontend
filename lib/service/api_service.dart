@@ -68,6 +68,14 @@ class ApiService {
 
       final authResponse = AuthResponse.fromJson(response.data);
 
+      // ADD THESE PRINTS
+      print("========== LOGIN SUCCESS ==========");
+      print("TOKEN RECEIVED:");
+      print(authResponse.token);
+      print("USER ID: ${authResponse.userId}");
+      print("ROLE: ${authResponse.role}");
+      print("===================================");
+
       await _tokenService.saveToken(authResponse.token);
       await _tokenService.saveUserId(authResponse.userId);
 
