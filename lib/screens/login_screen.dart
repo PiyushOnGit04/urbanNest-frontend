@@ -5,6 +5,7 @@ import 'package:urban_nest/screens/tenant_homescreen.dart';
 import 'package:urban_nest/service/api_service.dart';
 import 'register_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,7 +20,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final ApiService _apiService = ApiService();
 
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   bool _obscurePassword = true;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // Web client ID from Google Cloud Console — NOT the Android client ID.
+    // This must match GOOGLE_CLIENT_ID on the backend, or verification fails.
+    serverClientId:
+        "661793083340-dknrubtg6hfc266bk6dq7bdrq47megqr.apps.googleusercontent.com",
+  );
 
   // Global Cool-Mint Theme Definitions
   final Color primaryColor = const Color(0xFF1A5F7A); // Deep Slate Blue
@@ -34,6 +43,61 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      setState(() => _isGoogleLoading = true);
+      await _googleSignIn.signOut();
+      final account = await _googleSignIn.signIn();
+      if (account == null) return; // user closed the picker
+
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+
+      if (idToken == null) {
+        throw Exception("Google didn't return an ID token");
+      }
+
+      final response = await _apiService.loginWithGoogle(idToken);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            "Welcome, ${response.email}",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: primaryColor,
+        ),
+      );
+
+      if (response.role == "ROLE_OWNER") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OwnerHomeScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const TenantHomeScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      debugPrint(e.toString());
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
   }
 
   @override
@@ -322,6 +386,63 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // "or" divider
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        "or",
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey.shade500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Google sign-in button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: OutlinedButton.icon(
+                    onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                    icon: _isGoogleLoading
+                        ? SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primaryColor,
+                            ),
+                          )
+                        : Image.network(
+                            'https://www.google.com/favicon.ico',
+                            height: 20,
+                            width: 20,
+                          ),
+                    label: Text(
+                      "Continue with Google",
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: primaryColor,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

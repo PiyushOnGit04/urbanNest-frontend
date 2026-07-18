@@ -92,6 +92,30 @@ class ApiService {
     }
   }
 
+  Future<AuthResponse> loginWithGoogle(String idToken) async {
+    try {
+      final response = await _dio.post(
+        Constants.googleAuth,
+        data: {"idToken": idToken},
+      );
+
+      final authResponse = AuthResponse.fromJson(response.data);
+
+      await _tokenService.saveToken(authResponse.token);
+      await _tokenService.saveUserId(authResponse.userId);
+
+      return authResponse;
+    } on DioException catch (e) {
+      print("========== GOOGLE LOGIN ERROR ==========");
+      print("TYPE: ${e.type}");
+      print("MESSAGE: ${e.message}");
+      print("RESPONSE: ${e.response?.data}");
+      print("=========================================");
+
+      rethrow;
+    }
+  }
+
   Future<Room> createRoom(RoomRequest room) async {
     final response = await _dio.post(Constants.rooms, data: room.toJson());
 
