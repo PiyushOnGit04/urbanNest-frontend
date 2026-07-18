@@ -212,7 +212,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       // Role Dropdown
                       DropdownButtonFormField<String>(
-                        value: selectedRole,
+                        initialValue: selectedRole,
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           color: primaryColor,

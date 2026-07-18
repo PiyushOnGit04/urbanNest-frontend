@@ -284,8 +284,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     }
                                     debugPrint(e.toString());
                                   } finally {
-                                    if (mounted)
+                                    if (mounted) {
                                       setState(() => _isLoading = false);
+                                    }
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
